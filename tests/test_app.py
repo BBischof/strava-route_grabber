@@ -31,7 +31,7 @@ def test_client(app):
 def test_hello(test_client):
     """
     GIVEN: A flask hello app
-    WHEN: I GET the hello/ route
+    WHEN: I GET the /hello route
     THEN: The response should be "Hello World!"
     """
     response = test_client.get("/hello")

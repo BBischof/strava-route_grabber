@@ -9,4 +9,4 @@ WORKDIR /usr/src/app
 RUN cd /usr/src/app && \
   pip install -r /usr/src/app/pip_requirements
 
-CMD ["python", "app.py"]
+CMD ["python", "route_grabber.py"]
