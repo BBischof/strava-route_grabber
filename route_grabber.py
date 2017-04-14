@@ -6,6 +6,7 @@ import json
 from parsingLibrary.route import route
 from parsingLibrary.segment import segment
 from parsingLibrary.waypoint import waypoint
+from parsingLibrary.athlete import athlete
 app = Flask(__name__)
 
 def get_route_data_from_strava_by_number(route_number):
@@ -30,18 +31,21 @@ def parse_route_data_text_to_dictionary(route_data_text):
 def parse_route_segments_text_to_list_of_dictionary(route_data_text):
     return json.loads(route_data_text.strip('Segments(').strip(')\n      '))
 
-def parse_text_into_data_dictionaries(page_text):
+def parse_text_into_data_dictionaries(route_number, page_text):
     text_athlete, text_pageview = page_text.split("Strava")[2], page_text.split("Strava")[3]
     text_pageview_route_data, text_pageview_route_segments = text_pageview.split('.route')[1], text_pageview.split('.route')[2]
-    return {'athlete_data': parse_athlete_text_to_dictionary(text_athlete),
+    return {
+        'route_number': route_number,
+        'athlete_data': parse_athlete_text_to_dictionary(text_athlete),
         'route_data': parse_route_data_text_to_dictionary(text_pageview_route_data),
-        'segment_data': [x for x in parse_route_segments_text_to_list_of_dictionary(text_pageview_route_segments)]}
+        'segment_data': [x for x in parse_route_segments_text_to_list_of_dictionary(text_pageview_route_segments)]
+        }
 
-def convert_html_tree_to_data_dictionaries(tree):
+def convert_html_tree_to_data_dictionaries(route_number, tree):
     for x in tree.iter():
         try:
             if x.tag == 'script' and 'routeSegments' in x.text:
-                return parse_text_into_data_dictionaries(x.text)
+                return parse_text_into_data_dictionaries(route_number, x.text)
         except:
             pass
 
@@ -93,6 +97,37 @@ def extract_segment_content(route_number, segment_dictionary_list):
     ]
   return segment_list
 
+def correct_city_country_delimiting(city, state):
+  '''Handle cases where people poorly enter their city/state'''
+  if ("," in city):
+    if ("" == state):
+      split_city = city.rsplit(",", 1)
+      city = split_city[0]
+      state = split_city[1]
+    city = city.replace(",", "")
+  if ("," in state):
+    if ("" == city):
+      split_city = state.split(",", 1)
+      city = split_city[0]
+      state = split_city[1]
+    state = state.replace(",", "")
+  return city, state
+
+def extract_athlete_content(route_number, route_dictionary):
+  city, state = correct_city_country_delimiting(route_dictionary['geo']['city'], route_dictionary['geo']['state'])
+  new_athlete = athlete(
+      route_number,
+      route_dictionary['id'],
+      route_dictionary['display_name'].replace(",", "").encode('utf-8'),
+      city,
+      state,
+      route_dictionary['geo']['country'],
+      route_dictionary['geo']['lat_lng'][0],
+      route_dictionary['geo']['lat_lng'][1],
+      route_dictionary['member_type']
+    )
+  return new_athlete
+
 
 @app.route("/hello")
 def hello():
@@ -100,13 +135,14 @@ def hello():
 
 @app.route("/get_routes/<lower_bound>&<upper_bound>")
 def process_strava_routes_within_bounds(lower_bound, upper_bound):
-    routes_data = [(route_number, convert_html_tree_to_data_dictionaries(get_html_tree_from_strava_route_number(route_number)))
+    routes_data = [convert_html_tree_to_data_dictionaries(route_number, get_html_tree_from_strava_route_number(route_number))
             for route_number in convert_endpoints_to_range(lower_bound, upper_bound)]
     for x in routes_data:
-      if x[1] != None:
-        waypoints, metadata = extract_route_content(x[0], x[1]['route_data'])
-        segments = extract_segment_content(x[0], x[1]['segment_data'])
-    return metadata.name
+      if x != None:
+        waypoints, metadata = extract_route_content(x['route_number'], x['route_data'])
+        segments = extract_segment_content(x['route_number'], x['segment_data'])
+        athletes = extract_athlete_content(x['route_number'], x['athlete_data'])
+    return athletes.name
     # return ",".join([x[1]['route_data'] for x in routes_data])
 
 if __name__ == "__main__":
