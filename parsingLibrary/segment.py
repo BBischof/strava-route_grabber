@@ -12,4 +12,17 @@ class segment(object):
     self.newly_created_segment = newly_created_segment
     self.avg_grade = avg_grade
 
-
+  def write_row(self):
+    return map(str, [
+      self.route_id,
+      self.segment_id,
+      self.name,
+      self.segment_index,
+      self.distance,
+      self.elev_difference,
+      self.start_distance,
+      self.end_distance,
+      self.ratio,
+      self.newly_created_segment,
+      self.avg_grade
+    ])

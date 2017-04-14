@@ -7,6 +7,7 @@ from parsingLibrary.route import route
 from parsingLibrary.segment import segment
 from parsingLibrary.waypoint import waypoint
 from parsingLibrary.athlete import athlete
+from parsingLibrary.data_queue import data_queue
 app = Flask(__name__)
 
 def get_route_data_from_strava_by_number(route_number):
@@ -31,21 +32,21 @@ def parse_route_data_text_to_dictionary(route_data_text):
 def parse_route_segments_text_to_list_of_dictionary(route_data_text):
     return json.loads(route_data_text.strip('Segments(').strip(')\n      '))
 
-def parse_text_into_data_dictionaries(route_number, page_text):
-    text_athlete, text_pageview = page_text.split("Strava")[2], page_text.split("Strava")[3]
-    text_pageview_route_data, text_pageview_route_segments = text_pageview.split('.route')[1], text_pageview.split('.route')[2]
+def parse_text_into_data_dictionaries(route_number, script_content_text):
+    athlete_text, pageview_text = script_content_text.split("Strava")[2], script_content_text.split("Strava")[3]
+    pageview_text_route_data, pageview_text_route_segments = pageview_text.split('.route')[1], pageview_text.split('.route')[2]
     return {
         'route_number': route_number,
-        'athlete_data': parse_athlete_text_to_dictionary(text_athlete),
-        'route_data': parse_route_data_text_to_dictionary(text_pageview_route_data),
-        'segment_data': [x for x in parse_route_segments_text_to_list_of_dictionary(text_pageview_route_segments)]
+        'athlete_data': parse_athlete_text_to_dictionary(athlete_text),
+        'route_data': parse_route_data_text_to_dictionary(pageview_text_route_data),
+        'segment_data': [x for x in parse_route_segments_text_to_list_of_dictionary(pageview_text_route_segments)]
         }
 
 def convert_html_tree_to_data_dictionaries(route_number, tree):
-    for x in tree.iter():
+    for key in tree.iter():
         try:
-            if x.tag == 'script' and 'routeSegments' in x.text:
-                return parse_text_into_data_dictionaries(route_number, x.text)
+            if key.tag == 'script' and 'routeSegments' in key.text:
+                return parse_text_into_data_dictionaries(route_number, key.text)
         except:
             pass
 
@@ -128,6 +129,18 @@ def extract_athlete_content(route_number, route_dictionary):
     )
   return new_athlete
 
+def extract_rte_content(rte):
+  rte_waypoints, rte_metadata = extract_route_content(rte['route_number'], rte['route_data'])
+  rte_segments = extract_segment_content(rte['route_number'], rte['segment_data'])
+  rte_athlete = extract_athlete_content(rte['route_number'], rte['athlete_data'])
+  return (rte_metadata, rte_athlete, rte_segments, rte_waypoints)
+
+def append_rte_content_to_queue(queue, rte_content):
+  queue.metadata.append(rte_content[0])
+  queue.athlete.append(rte_content[1])
+  queue.segments.append(rte_content[2])
+  queue.waypoints.append(rte_content[3])
+
 
 @app.route("/hello")
 def hello():
@@ -137,13 +150,11 @@ def hello():
 def process_strava_routes_within_bounds(lower_bound, upper_bound):
     routes_data = [convert_html_tree_to_data_dictionaries(route_number, get_html_tree_from_strava_route_number(route_number))
             for route_number in convert_endpoints_to_range(lower_bound, upper_bound)]
-    for x in routes_data:
-      if x != None:
-        waypoints, metadata = extract_route_content(x['route_number'], x['route_data'])
-        segments = extract_segment_content(x['route_number'], x['segment_data'])
-        athletes = extract_athlete_content(x['route_number'], x['athlete_data'])
-    return athletes.name
-    # return ",".join([x[1]['route_data'] for x in routes_data])
+    queue = data_queue()
+    for rte in routes_data:
+      if rte != None:
+        append_rte_content_to_queue(queue, extract_rte_content(rte))
+    return ",".join(["\n"+x.name for x in queue.metadata])+"\n"
 
 if __name__ == "__main__":
     app.run(debug=True,host='0.0.0.0')

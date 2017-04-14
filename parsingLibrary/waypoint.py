@@ -5,3 +5,11 @@ class waypoint(object):
     self.latitude = latitude
     self.longitude = longitude
 
+  def write_row(self):
+    return map(str, [
+      self.route_id,
+      self.waypoint_index,
+      self.latitude,
+      self.longitude
+    ])
+

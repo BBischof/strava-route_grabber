@@ -11,3 +11,18 @@ class route(object):
     self.start_longitude = starting_location.longitude
     self.end_latitude = end_location.latitude
     self.end_longitude = end_location.longitude
+
+  def write_row(self):
+    return map(str, [
+          self.route_id,
+          self.name,
+          self.length,
+          self.elevation_gain,
+          self.route_type,
+          self.sub_type,
+          self.popularity,
+          self.start_latitude,
+          self.start_longitude,
+          self.end_latitude,
+          self.end_longitude
+        ])
