@@ -22,7 +22,8 @@ def process_strava_routes_within_bounds(lower_bound, upper_bound):
     for rte in routes_data:
       if rte != None:
         queue.append_rte_content_to_queue(pf.extract_rte_content(rte))
-    return ",".join(["\n"+x.name for x in queue.metadata])+"\n"
+    queue.add_geo_assets()
+    return ",".join(["\n"+",".join(x.write_row()) for x in queue.metadata])+"\n"
 
 if __name__ == "__main__":
     app.run(debug=True,host='0.0.0.0')

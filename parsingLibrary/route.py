@@ -9,8 +9,14 @@ class route(object):
     self.popularity = popularity
     self.start_latitude = starting_location.latitude
     self.start_longitude = starting_location.longitude
+    self.starting_point_geo_asset = {'name': "", 'cc': "", 'admin1': "", 'admin2': ""}
     self.end_latitude = end_location.latitude
     self.end_longitude = end_location.longitude
+    self.ending_point_geo_asset = {'name': "", 'cc': "", 'admin1': "", 'admin2': ""}
+
+  def add_geo_asset(self, starting_point_geo_asset, ending_point_geo_asset):
+    self.starting_point_geo_asset = starting_point_geo_asset
+    self.ending_point_geo_asset = ending_point_geo_asset
 
   def write_row(self):
     return map(str, [
@@ -23,6 +29,14 @@ class route(object):
           self.popularity,
           self.start_latitude,
           self.start_longitude,
+          self.starting_point_geo_asset['name'],
+          self.starting_point_geo_asset['cc'],
+          self.starting_point_geo_asset['admin1'],
+          self.starting_point_geo_asset['admin2'],
           self.end_latitude,
-          self.end_longitude
+          self.end_longitude,
+          self.ending_point_geo_asset['name'],
+          self.ending_point_geo_asset['cc'],
+          self.ending_point_geo_asset['admin1'],
+          self.ending_point_geo_asset['admin2']
         ])

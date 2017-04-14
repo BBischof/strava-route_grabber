@@ -3,3 +3,4 @@ pytest-flask
 requests
 lxml
 cssselect
+reverse_geocoder
