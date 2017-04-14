@@ -3,6 +3,9 @@ import requests
 from lxml import html
 from lxml.cssselect import CSSSelector
 import json
+from parsingLibrary.route import route
+from parsingLibrary.segment import segment
+from parsingLibrary.waypoint import waypoint
 app = Flask(__name__)
 
 def get_route_data_from_strava_by_number(route_number):
@@ -30,9 +33,9 @@ def parse_route_segments_text_to_list_of_dictionary(route_data_text):
 def parse_text_into_data_dictionaries(page_text):
     text_athlete, text_pageview = page_text.split("Strava")[2], page_text.split("Strava")[3]
     text_pageview_route_data, text_pageview_route_segments = text_pageview.split('.route')[1], text_pageview.split('.route')[2]
-    return {'athlete data': parse_athlete_text_to_dictionary(text_athlete),
-        'route data': parse_route_data_text_to_dictionary(text_pageview_route_data),
-        'segment data': parse_route_segments_text_to_list_of_dictionary(text_pageview_route_segments)[0]}
+    return {'athlete_data': parse_athlete_text_to_dictionary(text_athlete),
+        'route_data': parse_route_data_text_to_dictionary(text_pageview_route_data),
+        'segment_data': [x for x in parse_route_segments_text_to_list_of_dictionary(text_pageview_route_segments)]}
 
 def convert_html_tree_to_data_dictionaries(tree):
     for x in tree.iter():
@@ -42,15 +45,69 @@ def convert_html_tree_to_data_dictionaries(tree):
         except:
             pass
 
+def extract_waypoint_content(route_number, route_dictionary):
+  waypoints_list = [
+    waypoint(
+      route_number,
+      index,
+      way['waypoint']['point']['lat'],
+      way['waypoint']['point']['lng']
+    ) for index, way in enumerate(route_dictionary['route']['elements'])
+  ]
+  return waypoints_list
+
+def extract_route_metadata(route_number, route_dictionary, starting_location, end_location):
+  new_route = route(
+    route_number,
+    route_dictionary['metadata']['name'].replace(",", "").encode('utf-8'),
+    route_dictionary['metadata']['length'], # length in meters
+    route_dictionary['metadata']['elevation_gain'], # elevation gain in meters
+    route_dictionary['metadata']['route_type'],
+    route_dictionary['metadata']['sub_type'],
+    route_dictionary['route']['preferences']['popularity'],
+    starting_location,
+    end_location
+  )
+  return new_route
+
+def extract_route_content(route_number, route_dictionary):
+  waypoints_list = extract_waypoint_content(route_number, route_dictionary)
+  new_route = extract_route_metadata(route_number, route_dictionary, waypoints_list[0], waypoints_list[-1])
+  return waypoints_list, new_route
+
+def extract_segment_content(route_number, segment_dictionary_list):
+  segment_list = [
+    segment(
+      route_number,
+      seg['id'],
+      (seg['name'] or "").encode('utf-8').replace(",", ""),
+      index,
+      seg['distance'],
+      seg['elev_difference'],
+      seg['start_distance'],
+      seg['end_distance'],
+      seg['ratio'],
+      seg['newly_created_segment'],
+      seg['avg_grade']
+      ) for index, seg in enumerate(segment_dictionary_list)
+    ]
+  return segment_list
+
+
 @app.route("/hello")
 def hello():
     return "Hello World!"
 
 @app.route("/get_routes/<lower_bound>&<upper_bound>")
 def process_strava_routes_within_bounds(lower_bound, upper_bound):
-    routes_data = [convert_html_tree_to_data_dictionaries(get_html_tree_from_strava_route_number(route_number))
+    routes_data = [(route_number, convert_html_tree_to_data_dictionaries(get_html_tree_from_strava_route_number(route_number)))
             for route_number in convert_endpoints_to_range(lower_bound, upper_bound)]
-    return str(routes_data[0].keys()[0])
+    for x in routes_data:
+      if x[1] != None:
+        waypoints, metadata = extract_route_content(x[0], x[1]['route_data'])
+        segments = extract_segment_content(x[0], x[1]['segment_data'])
+    return metadata.name
+    # return ",".join([x[1]['route_data'] for x in routes_data])
 
 if __name__ == "__main__":
     app.run(debug=True,host='0.0.0.0')
