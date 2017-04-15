@@ -13,8 +13,9 @@ class data_queue(object):
     self.segments += rte_content[2]
     self.waypoints += rte_content[3]
 
-  def add_geo_assets(self):
-    map(lambda way, geoass: way.add_geo_asset(geoass), self.waypoints, rg.search([(waypoint.latitude, waypoint.longitude) for waypoint in self.waypoints]))
+  def add_route_and_waypoints_geo_assets(self):
+    waypoints_geoassets = rg.search([(waypoint.latitude, waypoint.longitude) for waypoint in self.waypoints])
+    map(lambda way, geoass: way.add_geo_asset(geoass), self.waypoints, waypoints_geoassets)
     route_start_geoassets = rg.search([(route.start_latitude, route.start_longitude) for route in self.metadata])
     route_end_geoassets = rg.search([(route.end_latitude, route.end_longitude) for route in self.metadata])
     map(lambda rte, start_geoass, end_geoass: rte.add_geo_asset(start_geoass, end_geoass), self.metadata, route_start_geoassets, route_end_geoassets)
