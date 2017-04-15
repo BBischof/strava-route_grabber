@@ -1,6 +1,6 @@
 from __future__ import print_function
 from flask import Flask
-import json, sys
+import sys
 from parsingLibrary import get_route_data as grd
 from parsingLibrary import parsing_functions as pf
 from parsingLibrary.data_queue import data_queue
