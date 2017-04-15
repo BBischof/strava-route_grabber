@@ -1,3 +1,5 @@
+from vincenty import vincenty
+
 class route(object):
   def __init__(self, route_id, name, length, elevation_gain, route_type, sub_type, popularity, starting_location, end_location):
     self.route_id = route_id
@@ -13,6 +15,10 @@ class route(object):
     self.end_latitude = end_location.latitude
     self.end_longitude = end_location.longitude
     self.ending_point_geo_asset = {'name': "", 'cc': "", 'admin1': "", 'admin2': ""}
+    self.start_end_separation_in_meters = self.compute_start_end_separation_in_meters(starting_location, end_location)
+
+  def compute_start_end_separation_in_meters(self, starting_location, end_location):
+    return vincenty((starting_location.latitude, starting_location.longitude), (end_location.latitude, end_location.longitude))*1000
 
   def add_geo_asset(self, starting_point_geo_asset, ending_point_geo_asset):
     self.starting_point_geo_asset = starting_point_geo_asset
@@ -38,5 +44,6 @@ class route(object):
           self.ending_point_geo_asset['name'],
           self.ending_point_geo_asset['cc'],
           self.ending_point_geo_asset['admin1'],
-          self.ending_point_geo_asset['admin2']
+          self.ending_point_geo_asset['admin2'],
+          self.start_end_separation_in_meters
         ])
