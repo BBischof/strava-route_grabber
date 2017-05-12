@@ -12,7 +12,7 @@ class athlete(object):
 
   def write_row(self):
     return map(str, [
-      self.route_id,
+        self.route_id,
         self.athlete_id,
         self.name,
         self.city,
