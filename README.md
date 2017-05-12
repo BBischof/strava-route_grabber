@@ -8,3 +8,20 @@ We're using:
 - [reverse-geocoder](https://github.com/thampiman/reverse-geocoder) to find City/State/Country data.
 - [vincenty](https://github.com/maurycyp/vincenty/blob/master/vincenty/__init__.py) to compute Vincenty distance.
 - [lxml](http://lxml.de/) for all the html parsing.
+
+## How to run locally
+
+Build the container:
+```
+docker-compose build
+```
+
+Start the container:
+```
+docker-compose up
+```
+
+Make a request:
+```
+curl -X GET 'localhost:3000/get_routes/3&10'
+```
