@@ -15,7 +15,7 @@ def extract_waypoint_content(route_number, route_dictionary):
   ]
   return waypoints_list
 
-def extract_route_metadata(route_number, route_dictionary, starting_location, end_location, athelete_id):
+def extract_route_metadata(route_number, route_dictionary, starting_location, ending_location, athelete_id):
   new_route = route(
     route_number,
     route_dictionary['metadata']['name'].replace(",", "").encode('utf-8'),
@@ -25,7 +25,7 @@ def extract_route_metadata(route_number, route_dictionary, starting_location, en
     route_dictionary['metadata']['sub_type'],
     route_dictionary['route']['preferences']['popularity'],
     starting_location,
-    end_location,
+    ending_location,
     athelete_id
   )
   return new_route
