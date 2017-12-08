@@ -1,4 +1,5 @@
 from vincenty import vincenty
+# import sqlalchemy
 
 class route(object):
   def __init__(self, route_id, name, length, elevation_gain, route_type, sub_type, popularity, starting_location, ending_location, athlete_id):
@@ -28,6 +29,7 @@ class route(object):
   def write_row(self):
     return map(str, [
           self.route_id,
+          self.athlete_id,
           self.name,
           self.length,
           self.elevation_gain,
@@ -46,6 +48,9 @@ class route(object):
           self.ending_point_geo_asset['cc'],
           self.ending_point_geo_asset['admin1'],
           self.ending_point_geo_asset['admin2'],
-          self.start_end_separation_in_meters,
-          self.athlete_id
+          self.start_end_separation_in_meters
         ])
+
+    # def write_row_to_db(self, connection):
+    #   connection.execute(addresses.insert())
+

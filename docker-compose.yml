@@ -6,3 +6,11 @@ services:
       - .:/usr/src/app
     ports:
       - "3000:5000"
+    env_file:
+        - .env
+    environment:
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+        - DATABASE_URL
+        - SNS_ARN
+        - AWS_REGION

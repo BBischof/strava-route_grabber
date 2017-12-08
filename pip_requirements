@@ -5,3 +5,5 @@ lxml
 cssselect
 reverse_geocoder
 vincenty
+sqlalchemy
+psycopg2
